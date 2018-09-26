@@ -1,0 +1,27 @@
+doctype html
+html
+  head
+    meta charset='utf-8'
+    title Chartify - グラフをCSVから簡単に
+    meta name='viewport' content='width=device-width, initial-scale=1.0'
+
+    link href='/foundation/css/normalize.css' rel='stylesheet'
+    link href='/foundation/css/foundation.min.css' rel='stylesheet'
+    link href='/foundation-icons/foundation-icons.css' rel='stylesheet'
+
+    script src='/js/jquery-2.1.4.min.js'
+    script src='/foundation/js/vendor/modernizr.js'
+  body
+    nav.top-bar data-topbar= role='navigation'
+      div.row style='max-width: 62.5rem;'
+        div.large-12.columns
+          ul.title-area
+            li.name
+              h1
+                a href='/' style='padding-left: 0rem;'
+                  i.fi-graph-bar style='color: white'
+                  span &nbsp;Chartify
+    div.row style='padding-top: 30px'
+      == yield
+
+

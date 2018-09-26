@@ -1,0 +1,200 @@
+div.large-12.columns
+  div#chart
+
+form action='/charts/create' method='post'
+  div#editor
+    div.large-12.columns
+      label
+        |グラフタイトル
+        input#title type='text' name='title' v-model='chart.title.text' debounce=500
+
+    div.large-12.columns
+      table style='width: 100%'
+        thead
+          tr
+            th
+            th タイトル
+            td 右側
+            th
+        tbody
+          tr v-repeat='chart.yAxis'
+            td
+              |{{$index}}
+            td
+              input type='text' style='margin: 0' v-model='title.text' debounce=500
+            td
+              div.switch style='margin: 0;'
+                input type='checkbox' style='margin: 0' v-model='opposite' v-attr='id:"yAxis_opposite_" + $index'
+                label style='margin: 0' v-attr='for:"yAxis_opposite_" + $index'
+            td
+              button.button.tiny style='margin: 0' v-on='click:removeYAxis($event,$index)' 削除
+      button.button.tiny v-on='click:addYAxis' y軸を追加
+
+      table style='width: 100%'
+        thead
+          tr
+            th
+            th 表示
+            th 系列名
+            th 棒・線
+            th X軸
+            th Y軸
+        tbody#series
+          tr v-repeat='chart.series'
+            td
+              i.fi-list syle='color: white' style='font-size: 1.2rem'
+            td
+              div.switch style='margin: 0'
+                input type='checkbox' style='margin: 0' v-model='visible' v-attr='id:"series_visible_" + $index'
+                label style='margin: 0' v-attr='for:"series_visible_" + $index'
+            td
+              input type='text' style='margin: 0' v-model='name' debounce='500'
+            td
+              select style='margin: 0' v-model='type'
+                option value='line' 線
+                option value='column' 棒
+            td
+              input type='radio' style='margin: 0' v-model='chart.x' v-attr='value:$index'
+            td
+              select style='margin: 0' v-model='yAxis' number='number' options='yAxisOptions'
+    div.large-12.column
+      input type='hidden' name='json' v-model='json'
+      button.button.expand type='submit' 保存する
+
+script src='/js/vue.js'
+script src='/js/jquery-ui.js'
+script src='/highcharts/highcharts.js'
+javascript:
+  "use strict";
+
+  var json = '#{{@chart.to_json}}';
+  var model = JSON.parse(json);
+  var yAxisOptions = model.yAxis.map(function (yAxis, index) {
+    return index;
+  });
+  model.update = 0;
+
+  (function () {
+    var $chart = $('#chart');
+    var vm = new Vue({
+      el: '#editor',
+      data: {
+        chart: model,
+        yAxisOptions: yAxisOptions,
+        json: json
+      },
+      methods: {
+        update: function () {
+          console.log('Update is started.');
+          $chart.css('height', this.chart.chart.height + 'px');
+          var output = JSON.parse(JSON.stringify(this.chart));
+
+          // titleに関する処理
+          if(output.title != void 0) {
+            if (output.title.text == void 0 || output.title.text.length == 0) {
+              delete output.title;
+            }
+          }
+
+            // yAxisに関する処理
+          for (var i = 0, len = output.yAxis.length; i < len; i++) {
+            var yAxis = output.yAxis[0];
+            delete yAxis.index;
+            // 空の場合はtitleを削除してValuesを表示させる
+            if (yAxis.title) {
+              if (yAxis.title.text == void 0 || yAxis.title.text.length == 0) {
+                delete yAxis.title;
+              }
+            }
+          }
+
+          // seriesに関する処理
+          //// seriesからx軸を抽出する
+          if (output.x != void 0) {
+            var xAxis = output.series.splice(output.x, 1);
+            xAxis = xAxis[0];
+            if (xAxis != void 0 && xAxis.visible) {
+              xAxis.categories = xAxis.data;
+              delete xAxis.data;
+              output.xAxis = xAxis;
+            }
+          }
+
+          //// 非表示のseriesを省く
+          output.series = output.series.filter(function (series) {
+            return series.visible;
+          });
+
+          $chart.highcharts(output);
+          this.json = JSON.stringify(output);
+          console.log('Update is finished.');
+        },
+        addYAxis: function (e) {
+          e.preventDefault();
+          this.chart.yAxis.push({title: {text: null}, opposite: true});
+        },
+        removeYAxis: function (e, index) {
+          e.preventDefault();
+          // 削除された際、seriesのyAxisの値をスライドするが、設計がよくないので考え直したい
+          if (this.chart.yAxis.length > 1) {
+            this.chart.yAxis.splice(index, 1);
+            for (var i = 0, len = this.chart.series.length; i < len; i++) {
+              var series = this.chart.series[i];
+              if (series.yAxis >= index) {
+                series.yAxis--;
+              }
+            }
+          }
+        }
+      },
+      filters: {
+        numberToBoolean: {
+          read: function (val) {
+            return val > 0;
+          },
+          write: function (val, oldVal) {
+            return val > 0;
+          }
+        }
+      },
+      watch: {
+        'chart.x': 'update',
+        'chart.chart': {
+          handler: 'update',
+          deep: true
+        },
+        'chart.title': {
+          handler: 'update',
+          deep: true
+        },
+        'chart.yAxis': {
+          handler: function () {
+            this.yAxisOptions = this.chart.yAxis.map(function (xAxis, index) {
+              return index;
+            });
+
+            var series = this.chart.series;
+            for (var i = 0, len = series.length; i < len; i++) {
+              if (this.yAxisOptions.indexOf(series[i].yAxis) < 0) {
+                series[i].yAxis = 0;
+              }
+            }
+            this.update();
+          },
+          deep: true
+        },
+        'chart.series': {
+          handler: 'update',
+          deep: true
+        },
+        'chart.update': {
+          handler: 'update',
+          deep: true,
+          immediate: true
+        }
+      }
+    });
+
+    $("#series").sortable();
+  })();
+
