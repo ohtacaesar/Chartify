@@ -1,0 +1,7 @@
+div#chart
+script src='/highcharts/highcharts.js'
+javascript:
+  var chart = JSON.parse('#{{@chart.to_json}}');
+  $(function () {
+    $('#chart').highcharts(chart);
+  });
