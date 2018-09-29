@@ -1,12 +1,12 @@
 version: '3.6'
-
 services:
   chartify:
-    build: ./
+    build:
+      context: ./
+      args:
+        ALPINE_SERVER: ${ALPINE_SERVER}
     volumes:
       - .:/app
-    ports:
-      - 9292:9292
     depends_on:
       - postgres
     environment:
@@ -18,7 +18,9 @@ services:
   nginx:
     build: ./nginx/
     ports:
-      - 8080:80
+      - ${NGINX_PORT:-8080}:80
+    environment:
+      NGINX_PORT: ${NGINX_PORT:-8080}
     depends_on:
       - chartify
 
