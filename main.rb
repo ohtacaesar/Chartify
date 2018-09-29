@@ -95,7 +95,7 @@ class App < Sinatra::Base
       )
     end
 
-    redirect '/charts/' + chart_id
+    redirect to('/charts/' + chart_id)
   end
 
   not_found do
