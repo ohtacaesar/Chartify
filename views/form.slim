@@ -70,6 +70,8 @@ javascript:
 
   var json = '#{{@chart.to_json}}';
   var model = JSON.parse(json);
+  var $form = $("#editor-form");
+  var action = $form.attr('action');
   var yAxisOptions = model.yAxis.map(function (yAxis, index) {
     return index;
   });
@@ -87,13 +89,24 @@ javascript:
       },
       methods: {
         submit: function (e) {
+          var that = this;
           e.preventDefault();
-          if (this.isSubmitting) return;
-          this.isSubmitting = true;
-          $("#editor-form").submit();
+          if (that.isSubmitting) return;
+          that.isSubmitting = true;
+          $.ajax({
+            type: 'post',
+            url: action,
+            data: {
+              'title': this.chart.title.text,
+              'json': this.json,
+            }
+          }).done(function (data) {
+            location.href = data['url'];
+          }).fail(function (data) {
+            that.isSubmitting = false;
+          })
         },
         update: function () {
-          console.log('Update is started.');
           $chart.css('height', this.chart.chart.height + 'px');
           var output = JSON.parse(JSON.stringify(this.chart));
 
@@ -119,11 +132,9 @@ javascript:
           // seriesに関する処理
           //// seriesからx軸を抽出する
           if (output.x != void 0) {
-            var xAxis = output.series.splice(output.x, 1);
-            xAxis = xAxis[0];
-            if (xAxis != void 0 && xAxis.visible) {
+            var xAxis = output.series[output.x];
+            if (xAxis != void 0) {
               xAxis.categories = xAxis.data;
-              delete xAxis.data;
               output.xAxis = xAxis;
             }
           }
@@ -135,7 +146,6 @@ javascript:
 
           $chart.highcharts(output);
           this.json = JSON.stringify(output);
-          console.log('Update is finished.');
         },
         addYAxis: function (e) {
           e.preventDefault();

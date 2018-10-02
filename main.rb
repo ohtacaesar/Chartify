@@ -1,5 +1,6 @@
 require 'bundler'
 Bundler.require
+require 'sinatra/base'
 require 'csv'
 require 'json'
 require 'fileutils'
@@ -83,7 +84,7 @@ class App < Sinatra::Base
       raise 'title is long.' if title.size > 30
     rescue => e
       p e
-      return slim :form
+      halt 400
     end
 
     # save
@@ -95,7 +96,7 @@ class App < Sinatra::Base
       )
     end
 
-    redirect to('/charts/' + chart_id)
+    halt 200, json(url: to('/charts/' + chart_id))
   end
 
   not_found do
