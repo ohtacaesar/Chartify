@@ -1,4 +1,4 @@
-FROM ruby:alpine
+FROM ruby:2.7-alpine
 
 ARG ALPINE_SERVER=""
 
@@ -10,7 +10,7 @@ RUN set -eux \
     &&  if [[ -n "${ALPINE_SERVER}" ]]; then \
           sed -i "s/dl-cdn.alpinelinux.org/${ALPINE_SERVER}/" /etc/apk/repositories; \
         fi \
-    &&  apk add --no-cache postgresql-libs \
+    &&  apk add --no-cache mariadb-connector-c \
     &&  apk add --no-cache --virtual .build-deps \
           autoconf \
           bison \
@@ -38,7 +38,8 @@ RUN set -eux \
           xz \
           yaml-dev \
           zlib-dev \
-          postgresql-dev \
+          mariadb-dev \
+    &&  bundle update --bundler \
     &&  bundle install \
     &&  apk del .build-deps
 
@@ -57,5 +58,5 @@ RUN ["chmod", "+x", "/usr/local/bin/entrypoint.sh"]
 
 ENTRYPOINT ["entrypoint.sh"]
 
-CMD ["bundle", "exec", "puma", "config.ru"]
+CMD ["puma", "config.ru"]
 

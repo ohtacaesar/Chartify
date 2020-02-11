@@ -2,6 +2,4 @@
 
 set -e
 
-rake initdb
-
 exec "$@"

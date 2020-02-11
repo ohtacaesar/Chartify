@@ -16,25 +16,24 @@ class App < Sinatra::Base
   configure do
     set :connection_hash, {
         host: ENV['DB_HOST'],
-        user: ENV['DB_USER'],
+        username: ENV['DB_USERNAME'],
         password: ENV['DB_PASSWORD'],
-        dbname: ENV['DB_DBNAME']
+        database: ENV['DB_DATABASE']
     }
   end
 
   def db
-    con = PG::connect(settings.connection_hash)
+    client = Mysql2::Client.new(settings.connection_hash)
     begin
-      yield con if block_given?
+      yield client if block_given?
     ensure
-      con.finish
+      client.close
     end
   end
 
   get '/' do
-    @charts = db do |con|
-      result = con.exec('select id, title from charts order by created_at desc limit 10;')
-      result.values
+    @charts = db do |client|
+      client.query('select id, title from charts order by created_at desc limit 10')
     end
 
     slim :home
@@ -43,16 +42,13 @@ class App < Sinatra::Base
   get '/charts/:chart_id' do
     chart_id = params[:chart_id]
 
-    result = db do |con|
-      result = con.exec_params(
-          'select id, title, highcharts, created_at from charts where id = $1;',
-          [chart_id]
-      )
-      result.values
+    result = db do |client|
+      stmt = client.prepare('select id, title, highcharts, created_at from charts where id = ?')
+      stmt.execute(chart_id)
     end
 
     pass if result.size == 0
-    @chart = JSON.parse(result[0][2])
+    @chart = JSON.parse(result.first['highcharts'])
 
     slim :chart
   end
@@ -89,11 +85,9 @@ class App < Sinatra::Base
 
     # save
     chart_id = SecureRandom.urlsafe_base64
-    db do |con|
-      con.exec_params(
-          'insert into charts (id, title, highcharts) values($1, $2, $3);',
-          [chart_id, title, chart_json]
-      )
+    db do |client|
+      stmt = client.prepare('insert into charts (id, title, highcharts) values(?, ?, ?)')
+      stmt.execute(chart_id, title, chart_json)
     end
 
     halt 200, json(url: to('/charts/' + chart_id))
