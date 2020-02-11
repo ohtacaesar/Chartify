@@ -8,12 +8,12 @@ services:
     volumes:
       - .:/app
     depends_on:
-      - postgres
+      - mysql
     environment:
-      DB_HOST: postgres
-      DB_USER: postgres
-      DB_PASSWORD:
-      DB_DBNAME: chartify
+      DB_HOST: mysql
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      DB_DATABASE: chartify
 
   nginx:
     build: ./nginx/
@@ -24,6 +24,10 @@ services:
     depends_on:
       - chartify
 
-  postgres:
-    image: postgres:10-alpine
+  mysql:
+    image: mysql:5
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_bin
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: chartify
 

@@ -31,7 +31,7 @@ div.large-12.column
   ul
     - @charts.each do |chart|
       li
-        a href="/charts/#{chart[0]}" #{chart[1]}
+        a href="/charts/#{chart['id']}" #{chart['title']}
 
 
 
