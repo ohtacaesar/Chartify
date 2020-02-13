@@ -2,7 +2,7 @@ require 'bundler'
 Bundler.require
 
 task :initdb do
-  dbname = ENV['DB_DBNAME']
+  dbname = ENV['DB_DATABASE']
 
   sql = open('config/schema.sql') do |f|
     f.read
