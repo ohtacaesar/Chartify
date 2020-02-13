@@ -29,5 +29,3 @@ services:
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_bin
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: chartify
-
