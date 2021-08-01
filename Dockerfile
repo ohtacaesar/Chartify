@@ -1,4 +1,4 @@
-FROM ruby:2.7-alpine
+FROM ruby:2.7-alpine3.13
 
 ARG ALPINE_SERVER=""
 
