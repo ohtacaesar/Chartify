@@ -119,7 +119,7 @@ javascript:
 
           // yAxisに関する処理
           for (var i = 0, len = output.yAxis.length; i < len; i++) {
-            var yAxis = output.yAxis[0];
+            var yAxis = output.yAxis[i];
             delete yAxis.index;
             // 空の場合はtitleを削除してValuesを表示させる
             if (yAxis.title) {
