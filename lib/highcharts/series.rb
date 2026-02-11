@@ -37,7 +37,7 @@ module Highcharts
         @data_type = :number
         @max       = @data.max
         @min       = @data.min
-        @average   = sum / @data.size
+        @average   = sum.to_f / @data.size
       end
     end
 
